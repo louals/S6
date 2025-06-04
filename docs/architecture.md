@@ -1,12 +1,12 @@
 # Architecture Technique de la Plateforme IA de Matching Candidats ↔ Employeurs
 
-## 🧱 Structure Générale
+## Structure Générale
 
 La plateforme est conçue selon une architecture **microservices** pour séparer les responsabilités, améliorer la scalabilité et faciliter le développement.
 
 ---
 
-## 📦 Microservices (Back-end)
+## Microservices (Back-end)
 
 | Microservice       | Description |
 |--------------------|-------------|
@@ -22,7 +22,7 @@ Tous ces services communiquent via des **API REST** (FastAPI).
 
 ---
 
-## 🗃️ Bases de Données
+## Bases de Données
 
 | Base                 | Technologie | Contenu |
 |----------------------|-------------|---------|
@@ -32,7 +32,7 @@ Tous ces services communiquent via des **API REST** (FastAPI).
 
 ---
 
-## 🎯 Frontend
+## Frontend
 
 | Plateforme | Stack | Description |
 |------------|-------|-------------|
@@ -41,7 +41,7 @@ Tous ces services communiquent via des **API REST** (FastAPI).
 
 ---
 
-## 🤖 Intelligence Artificielle
+## Intelligence Artificielle
 
 | Composant | Outils |
 |----------|--------|
@@ -51,7 +51,7 @@ Tous ces services communiquent via des **API REST** (FastAPI).
 
 ---
 
-## ☁️ DevOps / Déploiement
+## DevOps / Déploiement
 
 | Outil               | Rôle |
 |---------------------|------|
@@ -62,7 +62,7 @@ Tous ces services communiquent via des **API REST** (FastAPI).
 
 ---
 
-## 🔐 Sécurité
+## Sécurité
 
 - Authentification OAuth2 + JWT
 - RBAC (Role-Based Access Control)
@@ -70,7 +70,7 @@ Tous ces services communiquent via des **API REST** (FastAPI).
 
 ---
 
-## 🔄 Communication entre Services
+## Communication entre Services
 
 - REST API (FastAPI)
 - Authentification via token JWT
