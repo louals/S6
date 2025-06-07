@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
 from datetime import datetime
+from typing import Optional 
 
 class UserCreate(BaseModel):
     email: EmailStr
@@ -18,8 +19,16 @@ class UserOut(BaseModel):
     created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class LoginData(BaseModel):
     email: EmailStr
     password: str
+
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    password: Optional[str] = None
+    role: Optional[str] = None 

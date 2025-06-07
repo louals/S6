@@ -1,3 +1,4 @@
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.exc import IntegrityError
@@ -44,15 +45,16 @@ async def get_all_users(db: AsyncSession):
     return result.scalars().all()
 
 
-async def update_user(db: AsyncSession, user_id: uuid.UUID, updates: dict):
-    user = await get_user_by_id(db, user_id)
+async def update_user(db: AsyncSession, user_id: uuid.UUID, updates: dict) -> Optional[User]:
+    query = select(User).where(User.id == user_id)
+    result = await db.execute(query)
+    user = result.scalar_one_or_none()
+
     if not user:
         return None
 
-    for key, value in updates.items():
-        if key == "password":
-            value = bcrypt.hash(value)
-        setattr(user, key, value)
+    for field, value in updates.items():
+        setattr(user, field, value)
 
     await db.commit()
     await db.refresh(user)
