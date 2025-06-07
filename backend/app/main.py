@@ -7,3 +7,5 @@ async def root():
     return {"message": "Backend is alive!"}
 
 
+from app.routers import user
+app.include_router(user.router)
