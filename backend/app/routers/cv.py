@@ -1,52 +1,68 @@
-# app/routers/cv.py
-
-from fastapi import APIRouter, UploadFile, File, HTTPException
-from app.db.database import mongo_db
-from datetime import datetime
-from bson.objectid import ObjectId
-from typing import List
-
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from typing import List
+from datetime import datetime
 from io import BytesIO
+from bson import ObjectId
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
+
+import openai
+openai.api_key = os.getenv("OPEN_AI_KEY")
+
+from app.db.database import mongo_db
+from app.core.security import get_current_user
+from app.schemas.user import UserOut
+from app.utils.pdf_extractor import extract_text_from_pdf
+from app.utils.cv_parser import extract_cv_info_with_openai
 
 router = APIRouter(prefix="/cvs", tags=["CVs"])
 
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
-from datetime import datetime
-from bson import ObjectId
-from app.db.database import mongo_db
-from app.core.security import get_current_user
-from app.schemas.user import UserOut  # or your UserOut
 
-router = APIRouter(prefix="/cv", tags=["CVs"])
-
-@router.post("/upload")
+@router.post("/upload", summary="Upload and parse CV")
 async def upload_cv(
     file: UploadFile = File(...),
-    current_user: UserOut = Depends(get_current_user),
+    current_user: UserOut = Depends(get_current_user)
 ):
-    if not file.content_type or "pdf" not in file.content_type:
-        raise HTTPException(status_code=400, detail="Only PDF files allowed.")
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported for now.")
 
     contents = await file.read()
 
-    cv_data = {
+    # 1. Extract raw text from PDF
+    extracted_text = extract_text_from_pdf(contents)
+
+    # 2. Run OpenAI to extract info
+    cv_info = extract_cv_info_with_openai(extracted_text)
+
+    # 3. Build Mongo doc
+    cv_doc = {
         "filename": file.filename,
-        "content": contents,
-        "upload_date": datetime.utcnow(),
         "user_id": str(current_user.id),
+        "upload_date": datetime.utcnow(),
+        "content": contents,
+        "extracted_text": extracted_text,
+        "parsed_info": cv_info
     }
 
-    result = await mongo_db["cvs"].insert_one(cv_data)
+    # 4. Insert into MongoDB
+    result = await mongo_db["cvs"].insert_one(cv_doc)
 
-    return {"cv_id": str(result.inserted_id), "message": "CV uploaded successfully."}
+    return {
+        "cv_id": str(result.inserted_id),
+        "message": "CV uploaded and processed.",
+        "parsed_info": cv_info
+    }
 
 
-
-
-@router.get("/", response_model=List[dict])
-async def list_cvs():
-    cvs_cursor = mongo_db["cvs"].find({}, {"content": 0})  # Exclude the binary content
+@router.get("/", summary="List all CVs (user only)", response_model=List[dict])
+async def list_cvs(current_user: UserOut = Depends(get_current_user)):
+    cvs_cursor = mongo_db["cvs"].find(
+        {"user_id": str(current_user.id)},
+        {"content": 0}  # Don’t include heavy binary in list
+    )
     cvs = []
     async for cv in cvs_cursor:
         cv["_id"] = str(cv["_id"])
@@ -54,12 +70,15 @@ async def list_cvs():
     return cvs
 
 
-
-@router.get("/download/{cv_id}")
-async def download_cv(cv_id: str):
+@router.get("/download/{cv_id}", summary="Download a CV PDF")
+async def download_cv(cv_id: str, current_user: UserOut = Depends(get_current_user)):
     cv = await mongo_db["cvs"].find_one({"_id": ObjectId(cv_id)})
+
     if not cv:
         raise HTTPException(status_code=404, detail="CV not found")
+
+    if cv["user_id"] != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not your CV, buddy.")
 
     file_like = BytesIO(cv["content"])
     return StreamingResponse(file_like, media_type="application/pdf", headers={
