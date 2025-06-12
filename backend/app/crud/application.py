@@ -34,3 +34,5 @@ async def delete_application(db: AsyncSession, app_id: UUID) -> bool:
     result = await db.execute(delete(Application).where(Application.id == app_id))
     await db.commit()
     return result.rowcount > 0
+
+

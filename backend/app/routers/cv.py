@@ -61,7 +61,7 @@ async def upload_cv(
 async def list_cvs(current_user: UserOut = Depends(get_current_user)):
     cvs_cursor = mongo_db["cvs"].find(
         {"user_id": str(current_user.id)},
-        {"content": 0}  # Don’t include heavy binary in list
+        {"content": 0} 
     )
     cvs = []
     async for cv in cvs_cursor:

@@ -13,11 +13,11 @@ async def match_user_cvs_to_jobs(
     db: AsyncSession = Depends(get_async_session),
     current_user=Depends(get_current_user)  # <-- use token to get current user
 ):
-    # ✅ Step 1: Fetch the user's CVs only
+    # Fetch the user's CVs only
     cvs_cursor = mongo_db["cvs"].find({"user_id": str(current_user.id)})
     cvs = [cv async for cv in cvs_cursor]
 
-    # ✅ Step 2: Fetch all job offers
+    # Fetch all job offers
     job_rows = (await db.execute(JobOffer.__table__.select())).fetchall()
 
     if not cvs or not job_rows:
@@ -67,7 +67,7 @@ async def get_match_results(
     current_user = Depends(get_current_user),
     db: AsyncSession = Depends(get_async_session)
 ):
-    user_id = str(current_user.id)  # adapt if needed, make sure it's str to match Mongo IDs
+    user_id = str(current_user.id)  
 
     # 1. Get user CVs from Mongo
     user_cvs_cursor = mongo_db["cvs"].find({"user_id": user_id})

@@ -5,7 +5,7 @@ from typing import Optional
 
 def extract_text_from_pdf(file_bytes: bytes) -> Optional[str]:
     try:
-        doc = fitz.open(stream=file_bytes, filetype="pdf")  # ← This is the magic!
+        doc = fitz.open(stream=file_bytes, filetype="pdf")  
         text = ""
         for page in doc:
             text += page.get_text()

@@ -1,11 +1,21 @@
+from datetime import datetime, timezone
+
+
+import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import UUID
+from uuid import UUID, uuid4
 from typing import List
+from sqlalchemy import select
+
 
 from app.db.database import get_async_session
 from app.schemas.application import ApplicationCreate, ApplicationOut
 from app.crud import application as crud
+from app.core.security import get_current_user
+from app.db.database import mongo_db
+from app.models.job_offer import JobOffer
+from app.services.generate_cover_letter import generate_cover_letter, replace_placeholders
 
 router = APIRouter(prefix="/applications", tags=["Applications"])
 
@@ -37,3 +47,73 @@ async def delete_application_route(app_id: UUID, db: AsyncSession = Depends(get_
     success = await crud.delete_application(db, app_id)
     if not success:
         raise HTTPException(status_code=404, detail="Application not found")
+    
+@router.post("/generate-from-matches", response_model=List[ApplicationOut])
+async def generate_applications_from_matches(
+    db: AsyncSession = Depends(get_async_session),
+    current_user = Depends(get_current_user)
+):
+    # Fetch user CVs
+    cvs = [cv async for cv in mongo_db["cvs"].find({"user_id": str(current_user.id)})]
+    if not cvs:
+        raise HTTPException(status_code=404, detail="No CVs found")
+
+    cv_map = {str(cv["_id"]): cv for cv in cvs}
+
+    # Fetch matches
+    matches = [m async for m in mongo_db["matches"].find({"cv_id": {"$in": list(cv_map.keys())}})]
+    if not matches:
+        raise HTTPException(status_code=404, detail="No matches found")
+
+    job_offer_ids = list(set(match["job_offer_id"] for match in matches))
+    result = await db.execute(JobOffer.__table__.select().where(JobOffer.id.in_(job_offer_ids)))
+    job_offers = result.fetchall()
+    job_offer_map = {str(job.id): job for job in job_offers}
+
+    applications_created = []
+
+    for match in matches:
+        cv = cv_map.get(match["cv_id"])
+        job = job_offer_map.get(match["job_offer_id"])
+        if not cv or not job:
+            continue
+
+        parsed_cv = cv.get("parsed_info")
+        if not parsed_cv:
+            continue
+
+        # Prepare job info for prompt
+        job_info = {
+            "title": job.title,
+            "description": job.description,
+            "required_skills": [],  # add if needed
+        }
+
+        # Prepare user info for placeholder replacement
+        user_info = {
+            "name": parsed_cv.get("name", current_user.first_name),
+            "email": parsed_cv.get("email", current_user.email),
+            "phone": parsed_cv.get("phone", ""),
+            "address": parsed_cv.get("address", "123 Developer Lane"),
+            "location": parsed_cv.get("location", "Montreal, QC H1A 2B3"),
+        }
+
+        # Generate raw letter with placeholders
+        raw_letter = await generate_cover_letter(parsed_cv, job_info, user_info)
+
+        # Replace placeholders with actual info
+        final_letter = replace_placeholders(raw_letter, user_info)
+
+        app_data = ApplicationCreate(
+            id=uuid4(),
+            user_id=current_user.id,
+            offer_id=job.id,
+            cover_letter=final_letter,
+            matching_score=match.get("score", 0.0),
+            created_at=datetime.now(timezone.utc)
+        )
+
+        application = await crud.create_application(db, app_data)
+        applications_created.append(application)
+
+    return applications_created
