@@ -20,7 +20,9 @@ async def get_user_by_id(db: AsyncSession, user_id: uuid.UUID):
 
 
 async def create_user(db: AsyncSession, user_data: UserCreate):
-    hashed_password = bcrypt.hash(user_data.password)
+    raw_pwd = user_data.password or str(uuid.uuid4())          # mot de passe factice si None
+    hashed_password = bcrypt.hash(raw_pwd)
+
     new_user = User(
         id=uuid.uuid4(),
         email=user_data.email,
@@ -28,7 +30,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate):
         first_name=user_data.first_name,
         last_name=user_data.last_name,
         role=user_data.role,
-        created_at=datetime.datetime.utcnow()
+        created_at=datetime.utcnow(),
     )
     db.add(new_user)
     try:

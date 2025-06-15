@@ -53,18 +53,19 @@ async def generate_applications_from_matches(
     db: AsyncSession = Depends(get_async_session),
     current_user = Depends(get_current_user)
 ):
-    # Fetch user CVs
+    # Fetch all user's CVs
     cvs = [cv async for cv in mongo_db["cvs"].find({"user_id": str(current_user.id)})]
     if not cvs:
         raise HTTPException(status_code=404, detail="No CVs found")
 
     cv_map = {str(cv["_id"]): cv for cv in cvs}
 
-    # Fetch matches
+    # Fetch all matches that reference those CVs
     matches = [m async for m in mongo_db["matches"].find({"cv_id": {"$in": list(cv_map.keys())}})]
     if not matches:
         raise HTTPException(status_code=404, detail="No matches found")
 
+    # Get unique job offer IDs from matches
     job_offer_ids = list(set(match["job_offer_id"] for match in matches))
     result = await db.execute(JobOffer.__table__.select().where(JobOffer.id.in_(job_offer_ids)))
     job_offers = result.fetchall()
@@ -82,27 +83,17 @@ async def generate_applications_from_matches(
         if not parsed_cv:
             continue
 
-        # Prepare job info for prompt
         job_info = {
             "title": job.title,
             "description": job.description,
-            "required_skills": [],  # add if needed
+            "required_skills": [],  # You can populate this if your job table includes it
         }
 
-        # Prepare user info for placeholder replacement
-        user_info = {
-            "name": parsed_cv.get("name", current_user.first_name),
-            "email": parsed_cv.get("email", current_user.email),
-            "phone": parsed_cv.get("phone", ""),
-            "address": parsed_cv.get("address", "123 Developer Lane"),
-            "location": parsed_cv.get("location", "Montreal, QC H1A 2B3"),
-        }
+        # Generate raw letter (with placeholders)
+        raw_letter = await generate_cover_letter(parsed_cv, job_info)
 
-        # Generate raw letter with placeholders
-        raw_letter = await generate_cover_letter(parsed_cv, job_info, user_info)
-
-        # Replace placeholders with actual info
-        final_letter = replace_placeholders(raw_letter, user_info)
+        # Replace placeholders with parsed_cv info only
+        final_letter = replace_placeholders(raw_letter, parsed_cv)
 
         app_data = ApplicationCreate(
             id=uuid4(),

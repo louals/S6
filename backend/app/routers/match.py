@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.database import mongo_db, get_async_session
 from app.models.job_offer import JobOffer
-from app.services.matching_engine import compute_similarity_score, serialize_cv, serialize_job_offer
+from app.services.matching_engine import compute_similarity_score, generate_justification, serialize_cv, serialize_job_offer
 from app.core.security import get_current_user
 import json
 
@@ -50,10 +50,15 @@ async def match_user_cvs_to_jobs(
 
             score = compute_similarity_score(serialized_cv, serialized_job)
 
+            justification = await generate_justification(serialized_cv, serialized_job)
+
+
+
             matches.append({
                 "cv_id": str(cv["_id"]),
                 "job_offer_id": str(job.id),
-                "score": score
+                "score": score,
+                "justification": justification
             })
 
     # Optional: Delete old matches for just this user
@@ -102,7 +107,8 @@ async def get_match_results(
                 "job_offer_id": match["job_offer_id"],
                 "title": job_offer.title,
                 "description": job_offer.description,
-                "score": match.get("score", 0.0)
-            })
+                "score": match.get("score", 0.0),
+                "justification": match.get("justification", "Non spécifiée")
+})
 
     return {"message": "Matches retrieved", "matches": result}

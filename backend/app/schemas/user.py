@@ -1,14 +1,14 @@
 from pydantic import BaseModel, EmailStr
 from uuid import UUID
 from datetime import datetime
-from typing import Optional 
+from typing import Literal, Optional 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
+    password: str | None = None
     first_name: str
     last_name: str
-    role: str  # candidate | employer | admin
+    role: Literal["candidate", "employer", "admin"] = "candidate"
 
 class UserOut(BaseModel):
     id: UUID

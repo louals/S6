@@ -7,26 +7,33 @@ from datetime import datetime
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def replace_placeholders(letter: str, user_info: dict) -> str:
+def replace_placeholders(letter: str, parsed_info: dict) -> str:
     return (
-        letter.replace("[Your Name]", user_info.get("name", ""))
-              .replace("[Email Address]", user_info.get("email", ""))
-              .replace("[Phone Number]", user_info.get("phone", ""))
-              .replace("[Your Address]", user_info.get("address", ""))
-              .replace("[City, State, ZIP]", user_info.get("location", ""))
+        letter.replace("[Your Name]", parsed_info.get("name", ""))
+              .replace("[Email]", parsed_info.get("email", ""))
+              .replace("[Phone Number]", parsed_info.get("phone", ""))
+              .replace("[Your Address]", parsed_info.get("address", ""))
+              .replace("[City, State, ZIP]", parsed_info.get("location", "Montreal, QC"))
               .replace("[Today's Date]", datetime.now().strftime("%B %d, %Y"))
+              .replace("[Company's Name]", parsed_info.get("company", ""))
+              .replace("[Hiring Manager's Name]", parsed_info.get("hiring_manager", ""))
     )
-def generate_cover_letter(cv_info: dict, job_info: dict, user_info: dict) -> str:
+    
+async def generate_cover_letter(parsed_info: dict, job_info: dict) -> str:
+    skills = parsed_info.get("skills") or parsed_info.get("tech_stack") or []
+    education = parsed_info.get("education", [])
+    experience = parsed_info.get("experience", [])
+
     prompt = f"""
     Write a professional and personalized cover letter based on:
 
     Candidate:
-    Name: {user_info.get("name")}
-    Email: {user_info.get("email")}
-    Phone: {user_info.get("phone")}
-    Skills: {", ".join(cv_info.get("skills", []))}
-    Education: {"; ".join([f"{e['degree']} at {e['institution']}" for e in cv_info.get("education", [])])}
-    Experience: {"; ".join([f"{e['title']}: {e['description']}" for e in cv_info.get("experience", [])])}
+    Name: {parsed_info.get("name")}
+    Email: {parsed_info.get("email")}
+    Phone: {parsed_info.get("phone")}
+    Skills: {", ".join(skills)}
+    Education: {"; ".join([f"{e.get('degree', '')} at {e.get('institution', '')}" for e in education])}
+    Experience: {"; ".join([f"{e.get('title', '')}: {e.get('description', '')}" for e in experience])}
 
     Job:
     Title: {job_info.get("title")}
@@ -42,5 +49,4 @@ def generate_cover_letter(cv_info: dict, job_info: dict, user_info: dict) -> str
         temperature=0.7,
     )
 
-    raw_letter = response.choices[0].message.content.strip()
-    return replace_placeholders(raw_letter, user_info)
+    return response.choices[0].message.content.strip()
