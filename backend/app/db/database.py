@@ -24,8 +24,5 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 
 # MongoDB async client
 mongo_client = AsyncIOMotorClient(MONGODB_URL)
-mongo_db = mongo_client["MyDB"]   # uses DB from connection string or fallback
+mongo_db = mongo_client["jobmatching"]   
 
-# You can import mongo_db to access Mongo collections like:
-# cvs_collection = mongo_db["cvs"]
-# matchings_collection = mongo_db["matchings"]

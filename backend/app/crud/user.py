@@ -30,7 +30,7 @@ async def create_user(db: AsyncSession, user_data: UserCreate):
         first_name=user_data.first_name,
         last_name=user_data.last_name,
         role=user_data.role,
-        created_at=datetime.utcnow(),
+        created_at=datetime.datetime.utcnow(),
     )
     db.add(new_user)
     try:
