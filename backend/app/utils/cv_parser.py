@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# This auto-loads your OPENAI_API_KEY from env
+# This auto-loads OPENAI_API_KEY from env
 client = OpenAI()
 
 def extract_cv_info_with_openai(cv_text: str) -> dict:
