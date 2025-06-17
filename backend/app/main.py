@@ -3,7 +3,7 @@ from app.routers import user , job_offer , auth,oauth
 from app.routers import application ,cv,match
 from starlette.middleware.sessions import SessionMiddleware
 import os
-from app.db.database import engine  # ton create_async_engine
+from app.db.database import engine  
 from app.models.base import Base 
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,7 +19,7 @@ async def startup():
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # en prod tu restreins
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
