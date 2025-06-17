@@ -33,7 +33,7 @@ async def google_callback(request: Request, db: AsyncSession = Depends(get_async
     user = await get_user_by_email(db, email)
 
     if not user:
-        # 🚀 S'il est nouveau, on l’enregistre
+        #  S'il est nouveau, on l’enregistre
         user = await create_user(
             db,
             UserCreate(
@@ -45,8 +45,8 @@ async def google_callback(request: Request, db: AsyncSession = Depends(get_async
             )
         )
 
-    # 🎟️ Créer un JWT token
+    #  Créer un JWT token
     token = create_access_token({"sub": str(user.id)})
     
-    # ✅ Redirige vers frontend avec token dans l’URL
+    #  Redirige vers frontend avec token dans l’URL
     return RedirectResponse(f"http://localhost:3000/login/success?token={token}")
