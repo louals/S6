@@ -1,60 +1,66 @@
-import axios from 'axios';
+import axios from "axios";
 
-const BASE_URL = 'https://s6-1cep.onrender.com';
+const BASE_URL = "https://s6-1cep.onrender.com";
 
 const api = axios.create({
   baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { "Content-Type": "application/json" },
+  withCredentials: true,          // keep cookies for Google OAuth
 });
 
-// AUTH
-export const login = (email: string, password: string) =>
-  api.post('/login', { email, password });
+// ───── AUTH
+export const login    = (email: string, password: string) =>
+  api.post("/login", { email, password });
 
 export const register = (email: string, password: string) =>
-  api.post('/register', { email, password });
+  api.post("/register", { email, password });
 
-// USERS
-export const getUsers = () => api.get('/users/');
-export const getUser = (userId: string) => api.get(`/users/${userId}`);
-export const createUser = (data: object) => api.post('/users/', data);
-export const updateUser = (userId: string, data: object) => api.put(`/users/${userId}`, data);
-export const deleteUser = (userId: string) => api.delete(`/users/${userId}`);
 
-// JOB OFFERS
-export const getJobOffers = () => api.get('/job-offers/');
-export const getJobOffer = (offerId: string) => api.get(`/job-offers/${offerId}`);
-export const createJobOffer = (data: object) => api.post('/job-offers/', data);
-export const updateJobOffer = (offerId: string, data: object) => api.put(`/job-offers/${offerId}`, data);
-export const deleteJobOffer = (offerId: string) => api.delete(`/job-offers/${offerId}`);
+export const googleLogin = () => api.get("/auth/google/login");
 
-// APPLICATIONS
-export const getApplications = () => api.get('/applications/');
-export const getApplication = (appId: string) => api.get(`/applications/${appId}`);
-export const getApplicationsByUser = (userId: string) => api.get(`/applications/user/${userId}`);
-export const getApplicationsByOffer = (offerId: string) => api.get(`/applications/offer/${offerId}`);
-export const createApplication = (data: object) => api.post('/applications/', data);
-export const deleteApplication = (appId: string) => api.delete(`/applications/${appId}`);
 
-export const generateApplicationsFromMatches = (data: object) =>
-  api.post('/applications/generate-from-matches', data);
+export const googleCallback = (code: string) =>
+  api.get(`/auth/google/callback?code=${encodeURIComponent(code)}`);
 
-// CVS
+// ───── USERS
+export const getUsers      = ()            => api.get("/users/");
+export const getUser       = (id: string)  => api.get(`/users/${id}`);
+export const createUser    = (data: any)   => api.post("/users/", data);
+export const updateUser    = (id: string, data: any) => api.put(`/users/${id}`, data);
+export const deleteUser    = (id: string)  => api.delete(`/users/${id}`);
+
+// ───── JOB OFFERS
+export const getJobOffers  = ()                  => api.get("/job-offers/");
+export const getJobOffer   = (id: string)        => api.get(`/job-offers/${id}`);
+export const createJobOffer= (data: any)         => api.post("/job-offers/", data);
+export const updateJobOffer= (id: string, data: any) => api.put(`/job-offers/${id}`, data);
+export const deleteJobOffer= (id: string)        => api.delete(`/job-offers/${id}`);
+
+// ───── APPLICATIONS 
+export const getApplications        = ()            => api.get("/applications/");
+export const getApplication         = (id: string)  => api.get(`/applications/${id}`);
+export const getApplicationsByUser  = (uid: string) => api.get(`/applications/user/${uid}`);
+export const getApplicationsByOffer = (oid: string) => api.get(`/applications/offer/${oid}`);
+export const createApplication      = (data: any)   => api.post("/applications/", data);
+export const deleteApplication      = (id: string)  => api.delete(`/applications/${id}`);
+export const generateApplicationsFromMatches = (data: any) =>
+  api.post("/applications/generate-from-matches", data);
+
+// ───── CVS 
 export const uploadCV = (formData: FormData) =>
-  api.post('/cvs/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+  api.post("/cvs/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
 
-export const getCVs = () => api.get('/cvs/');
-export const downloadCV = (cvId: string) =>
-  api.get(`/cvs/download/${cvId}`, { responseType: 'blob' });
+export const getCVs      = ()             => api.get("/cvs/");
+export const downloadCV  = (id: string)   =>
+  api.get(`/cvs/download/${id}`, { responseType: "blob" });
 
-// MATCHING
-export const runMatch = (data: object) => api.post('/match/run', data);
-export const getMatchResults = () => api.get('/match/results');
+// ───── MATCHING 
+export const runMatch        = (data: any) => api.post("/match/run", data);
+export const getMatchResults = ()           => api.get("/match/results");
 
-export const sayHello = () => {
-  return "Hello from shared API!";
-};
+
+export const sayHello = () => "Hello from shared API!";
 
 export default api;
