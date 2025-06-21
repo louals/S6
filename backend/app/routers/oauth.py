@@ -49,4 +49,4 @@ async def google_callback(request: Request, db: AsyncSession = Depends(get_async
     token = create_access_token({"sub": str(user.id)})
     
     #  Redirige vers frontend avec token dans l’URL
-    return RedirectResponse(f"http://localhost:3000/login/success?token={token}")
+    return RedirectResponse(f"http://localhost:5173/login/success?token={token}")
