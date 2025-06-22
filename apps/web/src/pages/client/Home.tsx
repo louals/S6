@@ -2,7 +2,7 @@ import React from "react";
 import HeroSection from "../../components/home/HeroSection";
 import HowItWorks from "../../components/home/HowItWorks";
 import FeaturesSection from "../../components/home/FeaturesSection";
-import Testimonials from "../../components/home/Testimonials";
+import Testimonials from "../../components/home/DemoPreview";
 import Footer from "../../components/Footer";
 
 export default function Home() {

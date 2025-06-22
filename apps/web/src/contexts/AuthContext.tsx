@@ -42,9 +42,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         logout();
       }
     };
-
+  
     if (token) fetchUser(token);
   }, [token]);
+  
+
+  useEffect(() => {
+    if (user) {
+      console.log("Logged-in user info:", user);
+    }
+  }, [user]);
 
   /* ---------- Auth actions ---------- */
   const login = async (email: string, password: string) => {
@@ -54,24 +61,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setToken(tok);
     localStorage.setItem("token", tok);
     api.setAuthToken(tok);
-  
-    const uid = extractUserId(tok);
-    if (uid) {
-      const userRes = await api.getUser(uid);
-      const user = userRes.data;
-      setUser(user);
-  
-      // 👇 smart redirect based on role
-      if (user.role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (user.role === "employer") {
-        navigate("/employer/dashboard");
-      } else {
-        navigate("/dashboard"); // candidate or fallback
-      }
-    }
   };
   
+  useEffect(() => {
+    if (!user) return;
+  
+    if (user.role === "admin") {
+      navigate("/admin/dashboard");
+    } else if (user.role === "employer") {
+      navigate("/employer/dashboard");
+    } else {
+      navigate("/dashboard");
+    }
+  }, [user]);
 
   const register = async ({
     email,

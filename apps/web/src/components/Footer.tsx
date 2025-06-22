@@ -17,7 +17,7 @@ export default function Footer() {
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
         {/* Brand / Logo */}
-        <div className="text-2xl font-extrabold tracking-wide">JobMatch AI</div>
+        <div className="text-2xl font-extrabold tracking-wide">MatchifAI</div>
 
         {/* Navigation */}
         <nav>
@@ -37,7 +37,7 @@ export default function Footer() {
 
         {/* Copyright */}
         <div className="text-xs opacity-70">
-          &copy; {new Date().getFullYear()} JobMatch AI. All rights reserved.
+          &copy; {new Date().getFullYear()} MatchifAI. All rights reserved.
         </div>
       </motion.div>
     </footer>

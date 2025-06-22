@@ -1,11 +1,11 @@
 /* ---------- Navbar.tsx (mobile links centered, login button centered) ---------- */
 import { Link, useLocation } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { useEffect, useState } from "react";
 import { Menu, X, Sun, Moon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import BlueLogo from "../assets/logoblue.svg";
-import WhiteLogo from "../assets/logowhite.svg";
+import BlueLogo from "../../assets/logoblue.svg";
+import WhiteLogo from "../../assets/logowhite.svg";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -24,18 +24,19 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           {/* logo */}
           <Link to="/" className="flex items-center space-x-3 select-none">
-          <img
-  src={BlueLogo}
-  alt="JobMatch AI logo"
-  className="h-24 w-24 md:h-36 md:w-36 origin-center dark:hidden"
-/>
+          <div className="relative h-24 w-24 md:h-36 md:w-36">
+  <img
+    src={BlueLogo}
+    alt="JobMatch AI logo"
+    className="absolute inset-0 h-full w-full object-contain dark:hidden"
+  />
 
-{/* Dark mode logo */}
-<img
-  src={WhiteLogo}
-  alt="JobMatch AI logo"
-  className="h-24 w-24 md:h-36 md:w-36 origin-center hidden dark:block"
-/>
+  <img
+    src={WhiteLogo}
+    alt="JobMatch AI logo"
+    className="absolute inset-0 h-full w-full object-contain hidden dark:block"
+  />
+</div>
           </Link>
 
           {/* desktop links */}
