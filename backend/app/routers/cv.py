@@ -84,3 +84,16 @@ async def download_cv(cv_id: str, current_user: UserOut = Depends(get_current_us
     return StreamingResponse(file_like, media_type="application/pdf", headers={
         "Content-Disposition": f"attachment; filename={cv['filename']}"
     })
+    
+@router.delete("/{cv_id}", summary="Delete a CV", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_cv(cv_id: str, current_user: UserOut = Depends(get_current_user)):
+    cv = await mongo_db["cvs"].find_one({"_id": ObjectId(cv_id)})
+
+    if not cv:
+        raise HTTPException(status_code=404, detail="CV not found")
+
+    if cv["user_id"] != str(current_user.id):
+        raise HTTPException(status_code=403, detail="Not your CV, buddy.")
+
+    await mongo_db["cvs"].delete_one({"_id": ObjectId(cv_id)})
+    return  # 204 = empty body on success
