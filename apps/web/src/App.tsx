@@ -24,6 +24,7 @@ import ClientLayout from "./layouts/ClientLayout";
 import LoadingM from "./components/animations/LoadingM";
 import LoginSuccess from "./pages/LoginSuccess";
 import EmployerLayout from "./layouts/EmployerLayout";
+import ApplicantsPage from "./pages/employer/Applicant";
 
 
 
@@ -54,6 +55,8 @@ export default function App() {
       </EmployerRoute>
     }
   />
+  <Route path="/employer/jobs/:id/applicants" element={<EmployerRoute><ApplicantsPage /></EmployerRoute>} />
+
   <Route
     path="jobs"
     element={
