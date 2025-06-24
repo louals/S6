@@ -34,7 +34,7 @@ async def get_user(
     db: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.id != user_id and current_user.role != "admin":
+    if current_user.id != user_id and current_user.role not in ("admin", "employer"):
         raise HTTPException(status_code=403, detail="Not authorized to view this user")
     
     user = await user_crud.get_user_by_id(db, user_id)
