@@ -23,7 +23,16 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* logo */}
-          <Link to="/" className="flex items-center space-x-3 select-none">
+          <Link
+  to={
+    user?.role === "employer"
+      ? "/employer/dashboard"
+      : user?.role === "admin"
+      ? "/admin/dashboard"
+      : "/"
+  }
+  className="flex items-center space-x-3 select-none"
+>
           <div className="relative h-24 w-24 md:h-36 md:w-36">
   <img
     src={BlueLogo}
@@ -97,15 +106,20 @@ function NavLinks({
 }) {
   const base = "text-sm font-semibold transition";
   const active = "text-primary dark:text-white";
-  const idle = "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-white";
+  const idle =
+    "text-gray-700 dark:text-gray-300 hover:text-primary dark:hover:text-white";
 
   const cls = (path: string) =>
-    `${base} ${currentPath === path ? active : idle} ${mobile ? "block text-center" : ""}`;
+    `${base} ${currentPath === path ? active : idle} ${
+      mobile ? "block text-center" : ""
+    }`;
 
-  // wrapper for hover lift / mobile slide
   const Wrap: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     mobile ? (
-      <motion.div whileHover={{ scale: 1.03 }} className="w-full flex justify-center">
+      <motion.div
+        whileHover={{ scale: 1.03 }}
+        className="w-full flex justify-center"
+      >
         {children}
       </motion.div>
     ) : (
@@ -114,57 +128,89 @@ function NavLinks({
       </motion.span>
     );
 
+  
+  let links: any[] = [];
+
+  if (!user) {
+    links = [
+      { to: "/", label: "Home" },
+      { to: "/about", label: "About" },
+    ];
+  } else if (user.role === "candidate") {
+    links = [
+      { to: "/", label: "Home" },
+      { to: "/upload", label: "Upload CV" },
+      { to: "/jobs", label: "Browse Jobs" },
+      { to: "/matches", label: "My Matches" },
+      { to: "/applications", label: "My Applications" },
+    ];
+  } else if (user.role === "employer") {
+    links = [
+      { to: "/employer/dashboard", label: "Dashboard" },
+      { to: "/employer/jobs", label: "Manage Jobs" },
+    ];
+  } else if (user.role === "admin") {
+    links = [
+      { to: "/admin/dashboard", label: "Dashboard" },
+      { to: "/admin/users", label: "Users" },
+    ];
+  }
+
   return (
     <div
       className={
-        mobile ? "flex flex-col items-center space-y-3 w-full" : "flex items-center space-x-6"
+        mobile
+          ? "flex flex-col items-center space-y-3 w-full"
+          : "flex items-center space-x-6"
       }
     >
-      {[
-        { to: "/jobs", label: "Browse Jobs", show: true },
-        { to: "/about", label: "About", show: !user },
-      ].map(({ to, label, show }) =>
-        show ? (
-          <Wrap key={to}>
-            <Link to={to} className={cls(to)}>
-              {label}
+      {links.map(({ to, label }) => (
+        <Wrap key={to}>
+          <Link to={to} className={cls(to)}>
+            {label}
+          </Link>
+        </Wrap>
+      ))}
+
+      {user ? (
+        <Wrap>
+          <button
+            onClick={logout}
+            className={`${base} text-red-600 hover:text-red-700 ${
+              mobile && "w-full text-center"
+            }`}
+          >
+            Logout
+          </button>
+        </Wrap>
+      ) : (
+        <>
+          <Wrap>
+            <Link
+              to="/login"
+              className={`px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded shadow text-sm ${
+                mobile ? "text-center w-full" : ""
+              }`}
+            >
+              Login
             </Link>
           </Wrap>
-        ) : null
+          <Wrap>
+            <Link
+              to="/signup"
+              className={`px-4 py-2 bg-white dark:bg-primary/20 border border-primary dark:text-white text-primary hover:bg-primary/10 dark:hover:bg-gray-800 rounded shadow text-sm ${
+                mobile ? "text-center w-full" : ""
+              }`}
+            >
+              Join Now
+            </Link>
+          </Wrap>
+        </>
       )}
-
-{user ? (
-  <Wrap>
-    <button
-      onClick={logout}
-      className={`${base} text-red-600 hover:text-red-700 ${mobile && "w-full text-center"}`}
-    >
-      Logout
-    </button>
-  </Wrap>
-) : (
-  <>
-    <Wrap>
-      <Link
-        to="/login"
-        className={`px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded shadow text-sm ${mobile ? "text-center w-full" : ""}`}
-      >
-        Login
-      </Link>
-    </Wrap>
-    <Wrap>
-      <Link
-        to="/signup"
-        className={`px-4 py-2 bg-white dark:bg-primary/20 border border-primary dark:text-white text-primary hover:bg-primary/10 dark:hover:bg-gray-800 rounded shadow text-sm ${mobile ? "text-center w-full" : ""}`}
-      >
-        Join Now
-      </Link>
-    </Wrap>
-  </>
-)}
     </div>
   );
 }
+
 
 /* ---------- helper: dark‑mode toggle ---------- */
 function DarkModeToggle({

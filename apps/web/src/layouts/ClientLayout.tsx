@@ -5,8 +5,8 @@ import Navbar from "../components/client/Navbar";
 export default function ClientLayout() {
     return (
       <>
-        <Navbar />      {/* <— logo & nav appear */}
-        <Outlet />      {/* nested page content */}
+        <Navbar />      
+        <Outlet />     
       </>
     );
   }

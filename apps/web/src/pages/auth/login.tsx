@@ -37,16 +37,7 @@ export default function LoginPage() {
     window.location.href = "https://s6-1cep.onrender.com/auth/google/login";
   };
 
-  const handleGoogle = async () => {
-    setLoading(true);
-    try {
-      // await loginWithGoogle();
-    } catch {
-      setError("Google sign-in failed. Try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+ 
 
   /* --------------------------------------------------------------- */
   return (

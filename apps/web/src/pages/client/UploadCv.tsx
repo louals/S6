@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
-import { uploadCV, getCVs, downloadCV, deleteCV } from "api";
+import { uploadCV, getCVs, downloadCV, deleteCV, runMatch } from "api";
 import { toast } from "react-hot-toast";
 import { convertDocxToPdf } from "../../utils/docsToPdf";
-
+import LoadingMWhite from "../../components/animations/LoadingMwhite";
+import LoadingM from "../../components/animations/LoadingM";
 
 interface CVItem {
   _id: string;
@@ -20,12 +21,8 @@ export default function UploadCvPage() {
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  /* redirect if not logged in */
-  useEffect(() => {
-    if (!token) navigate("/login");
-  }, [token, navigate]);
+  
 
-  /* fetch CV list */
   useEffect(() => {
     (async () => {
       try {
@@ -40,41 +37,39 @@ export default function UploadCvPage() {
   const handleFiles = useCallback(async (files: FileList | null) => {
     if (!files?.length) return;
     let file = files[0];
-  
-    // 🛑 Validate type
+
     if (!file.name.match(/\.(pdf|docx?)$/i)) {
       toast.error("Only PDF or DOCX allowed");
       return;
     }
-  
+
     setUploading(true);
-  
+
     try {
-      /* ---- DOCX branch ---- */
       if (file.name.match(/\.docx$/i)) {
-        
         const pdfBlob = await convertDocxToPdf(file);
         file = new File([pdfBlob], file.name.replace(/\.docx$/i, ".pdf"), {
           type: "application/pdf",
         });
       }
-  
-      /* ---- Upload ---- */
+
       const formData = new FormData();
       formData.append("file", file);
       await uploadCV(formData);
-  
-      toast.success("CV uploaded!");
-      const res = await getCVs();
-      setCvs(res.data);
+
+      toast.success("CV uploaded! Running matching...");
+
+      await runMatch({}); 
+
+      toast.success("Matching complete!");
+      navigate("/matches"); // redirect to matches page
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Upload failed");
     } finally {
       setUploading(false);
     }
-  }, []);
+  }, [navigate]);
 
-  /* drag-and-drop */
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
     handleFiles(e.dataTransfer.files);
@@ -85,7 +80,6 @@ export default function UploadCvPage() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold mb-6">Upload Your CV</h1>
 
-        {/* Drop zone */}
         <div
           onDragOver={(e) => e.preventDefault()}
           onDrop={onDrop}
@@ -106,10 +100,19 @@ export default function UploadCvPage() {
         </div>
 
         {uploading && (
-          <p className="mt-4 text-primary font-semibold animate-pulse">Uploading…</p>
+           <>
+           {/* Show dark or light spinner depending on theme */}
+           <div className="mt-4 flex justify-center">
+             <div className="block dark:hidden">
+               <LoadingM />
+             </div>
+             <div className="hidden dark:block">
+               <LoadingMWhite />
+             </div>
+           </div>
+         </>
         )}
 
-        {/* List */}
         <h2 className="text-xl font-semibold mt-10 mb-4">Your CVs</h2>
         {cvs.length === 0 ? (
           <p className="text-gray-600 dark:text-gray-400">No CVs uploaded yet.</p>
@@ -135,19 +138,19 @@ export default function UploadCvPage() {
                     Download
                   </button>
                   <button
-  onClick={async () => {
-    try {
-      await deleteCV(cv._id);
-      toast.success("CV deleted");
-      setCvs(prev => prev.filter(c => c._id !== cv._id)); // optimistic UI
-    } catch (err: any) {
-      toast.error(err.response?.data?.detail || "Delete failed");
-    }
-  }}
-  className="text-red-500 hover:underline text-sm"
->
-  Delete
-</button>
+                    onClick={async () => {
+                      try {
+                        await deleteCV(cv._id);
+                        toast.success("CV deleted");
+                        setCvs((prev) => prev.filter((c) => c._id !== cv._id));
+                      } catch (err: any) {
+                        toast.error(err.response?.data?.detail || "Delete failed");
+                      }
+                    }}
+                    className="text-red-500 hover:underline text-sm"
+                  >
+                    Delete
+                  </button>
                 </div>
               </li>
             ))}

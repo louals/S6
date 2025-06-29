@@ -6,6 +6,7 @@ import { extractUserId } from "../utils/jwt";
 interface AuthContextType {
   user: any;
   token: string | null;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: {
     email: string;
@@ -26,9 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(
     localStorage.getItem("token")
   );
-  const [user, setUser]   = useState<any>(null);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(!!token); // true only if token exists
 
-  
   useEffect(() => {
     const fetchUser = async (tok: string) => {
       try {
@@ -40,40 +41,44 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (err) {
         console.error("Failed to fetch user -> logging out:", err);
         logout();
+      } finally {
+        setLoading(false);
       }
     };
-  
-    if (token) fetchUser(token);
-  }, [token]);
-  
 
-  useEffect(() => {
-    if (user) {
-      console.log("Logged-in user info:", user);
+    if (token) {
+      fetchUser(token);
+    } else {
+      setLoading(false);
     }
-  }, [user]);
+  }, [token]);
 
-  /* ---------- Auth actions ---------- */
-  const login = async (email: string, password: string) => {
-    const res = await api.login(email, password);
-    const tok = res.data.access_token;
-  
-    setToken(tok);
-    localStorage.setItem("token", tok);
-    api.setAuthToken(tok);
-  };
-  
   useEffect(() => {
     if (!user) return;
-  
+
     if (user.role === "admin") {
       navigate("/admin/dashboard");
     } else if (user.role === "employer") {
       navigate("/employer/dashboard");
     } else {
-      navigate("/dashboard");
+      navigate("/");
     }
   }, [user]);
+
+  const login = async (email: string, password: string) => {
+    const res = await api.login(email, password);
+    const tok = res.data.access_token;
+    setToken(tok);
+    localStorage.setItem("token", tok);
+    api.setAuthToken(tok);
+  
+    
+    const uid = extractUserId(tok);
+    if (uid) {
+      const userRes = await api.getUser(uid);
+      setUser(userRes.data);
+    }
+  };
 
   const register = async ({
     email,
@@ -89,19 +94,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     role: string;
   }) => {
     await api.register({ email, password, first_name, last_name, role });
-    await login(email, password); // auto-login on success
+    await login(email, password);
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
+    setLoading(false);
     api.setAuthToken(null);
     localStorage.removeItem("token");
     navigate("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout,setUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   );

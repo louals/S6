@@ -7,35 +7,41 @@ import { useAuth } from "../contexts/AuthContext";
 export default function LoginSuccess() {
   const navigate = useNavigate();
   const { search } = useLocation();
-  const { setUser } = useAuth();   // thanks to step 1
+  const { setUser } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(search);
-    const token  = params.get("token");
+    const token = params.get("token");
 
     if (!token) {
       navigate("/login");
       return;
     }
 
-    // 1️⃣ Persist + set header
     localStorage.setItem("token", token);
     api.setAuthToken(token);
 
-    // 2️⃣ Decode user ID
     const uid = extractUserId(token);
     if (!uid) {
       navigate("/login");
       return;
     }
 
-    // 3️⃣ Fetch profile
     api.getUser(uid)
-      .then(res => {
-        setUser(res.data);
-        navigate("/dashboard", { replace: true });
+      .then((res) => {
+        const user = res.data;
+        setUser(user);
+
+        // Redirect based on role
+        if (user.role === "admin") {
+          navigate("/admin/dashboard", { replace: true });
+        } else if (user.role === "employer") {
+          navigate("/employer/dashboard", { replace: true });
+        } else {
+          navigate("/", { replace: true });
+        }
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Failed to fetch user", err);
         navigate("/login");
       });

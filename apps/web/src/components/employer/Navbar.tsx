@@ -29,7 +29,16 @@ export default function EmployerNavbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* logo */}
-          <Link to="/" className="flex items-center space-x-3 select-none">
+          <Link
+  to={
+    user?.role === "employer"
+      ? "/employer/dashboard"
+      : user?.role === "admin"
+      ? "/admin/dashboard"
+      : "/"
+  }
+  className="flex items-center space-x-3 select-none"
+>
             <div className="relative h-24 w-24 md:h-36 md:w-36">
               <img
                 src={BlueLogo}
@@ -46,6 +55,9 @@ export default function EmployerNavbar() {
 
           {/* desktop nav */}
           <div className="hidden md:flex items-center space-x-6">
+          <Link to="/" className={cls("/employer/jobs")}>
+              Home
+            </Link>
             <Link to="/employer/jobs" className={cls("/employer/jobs")}>
               My Jobs
             </Link>
